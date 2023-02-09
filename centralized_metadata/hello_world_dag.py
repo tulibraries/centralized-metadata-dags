@@ -1,18 +1,8 @@
 """Airflow DAG"""
-from datetime import datetime, timedelta
+from datetime import timedelta
 import airflow
-import os
 import pendulum
-from airflow.models import Variable
-from airflow.hooks.base import BaseHook
 from airflow.operators.bash import BashOperator
-
-"""
-INIT SYSTEMWIDE VARIABLES
-
-check for existence of systemwide variables shared across tasks that can be
-initialized here if not found (i.e. if this is a new installation) & defaults exist
-"""
 
 # AIRFLOW_HOME = Variable.get("AIRFLOW_HOME")
 # AIRFLOW_USER_HOME = Variable.get("AIRFLOW_USER_HOME")
@@ -50,4 +40,3 @@ SET_COLLECTION_NAME = BashOperator(
 )
 
 # SET UP TASK DEPENDENCIES
-
