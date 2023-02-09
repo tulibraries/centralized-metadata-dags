@@ -1,0 +1,24 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pytest = "*"
+apache-airflow = "==2.5.1"
+pylint = "*"
+moto = "*"
+requests-mock = "*"
+boto3 = "*"
+
+
+
+# required in circleci context.
+numpy = "*"
+pandas = "*"
+
+[packages]
+pytest = "*"
+
+[requires]
+python_version = "3.9"

@@ -1,0 +1,16 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+.pytest_cache/
+.conan_the_deployer
+.gritty_travis
+.docker
+deploy.zip
+dags
+data
+.vscode
