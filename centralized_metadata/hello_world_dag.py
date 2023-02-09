@@ -1,10 +1,7 @@
 """Airflow DAG"""
-from datetime import datetime, timedelta
+from datetime import timedelta
 import airflow
-import os
 import pendulum
-from airflow.models import Variable
-from airflow.hooks.base import BaseHook
 from airflow.operators.bash import BashOperator
 
 """
@@ -50,4 +47,3 @@ SET_COLLECTION_NAME = BashOperator(
 )
 
 # SET UP TASK DEPENDENCIES
-
