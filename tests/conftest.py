@@ -16,7 +16,7 @@ def pytest_sessionstart():
     subprocess.run("mkdir -p data", shell=True)
     subprocess.run("mkdir -p logs", shell=True)
     subprocess.run("cp ./centralized_metadata/*.py dags/centralized_metadata", shell=True)
-
+    Variable.set("hello_message", "hola")
     airflow_session = Session()
     airflow_session.commit()
 
