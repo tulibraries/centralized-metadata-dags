@@ -3,10 +3,11 @@ from datetime import timedelta
 import airflow
 import pendulum
 from airflow.operators.bash import BashOperator
+from airflow.models import Variable
 
 # AIRFLOW_HOME = Variable.get("AIRFLOW_HOME")
 # AIRFLOW_USER_HOME = Variable.get("AIRFLOW_USER_HOME")
-
+hello_message = Variable.get("hello_message")
 
 # CREATE DAG
 DEFAULT_ARGS = {
@@ -35,7 +36,7 @@ Tasks with custom logic are relegated to individual Python files.
 
 SET_COLLECTION_NAME = BashOperator(
     task_id="set_collection_name",
-    bash_command='echo hello world',
+    bash_command='echo ' + hello_message,
     dag=DAG
 )
 
