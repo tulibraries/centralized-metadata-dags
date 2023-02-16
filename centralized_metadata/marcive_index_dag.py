@@ -1,0 +1,57 @@
+# Airflow DAG to index Web Content into SolrCloud.
+from datetime import datetime, timedelta
+import airflow
+import pendulum
+from airflow.models import Variable
+from airflow.hooks.base import BaseHook
+from airflow.operators.bash import BashOperator
+
+"""
+INIT SYSTEMWIDE VARIABLES
+
+check for existence of systemwide variables shared across tasks that can be
+initialized here if not found (i.e. if this is a new installation) & defaults exist
+"""
+
+SFTP = BaseHook.get_connection("MARC_FILES_SFTP")
+HTTP = BaseHook.get_connection("CENTRALIZED_METADATA_API")
+
+DEFAULT_ARGS = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': pendulum.datetime(2018, 12, 13, tz="UTC"),
+    'email_on_failure': False,
+    'email_on_retry': False,
+    #'on_failure_callback': tasks.execute_slackpostonfail,
+    'retries': 2,
+    'retry_delay': timedelta(minutes=5),
+}
+
+DAG = airflow.DAG(
+    'marcive_ingest',
+    default_args=DEFAULT_ARGS,
+    catchup=False,
+    max_active_runs=1,
+    #schedule=SCHEDULE_INTERVAL
+)
+
+"""
+CREATE TASKS
+
+Tasks with all logic contained in a single operator can be declared here.
+Tasks with custom logic are relegated to individual Python files.
+"""
+
+
+INDEX_WEB_CONTENT = BashOperator(
+    task_id="get_and_ingest_marcive_records",
+    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-ingest-marc-records.sh",
+    env={
+        "FTP_SERVER": "",
+        "FTP_PORT": "",
+        "FTP_USER": "",
+        "FTP_ID_PATH": "",
+        "CM_API_ENDPOINT": "",
+    },
+    dag=DAG
+)
