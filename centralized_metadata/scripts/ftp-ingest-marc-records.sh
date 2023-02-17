@@ -8,7 +8,7 @@ mkdir -p ./marc_records
 
 cd ./marc_records
 
-echo get marcive/* sftp -P $FTP_PORT -i $FTP_ID_PATH -o StrictHostKeyChecking=no $FTP_USER@$FTP_SERVER 
+echo get marcive/* | sftp -P $FTP_PORT -i $FTP_ID_PATH -o StrictHostKeyChecking=no $FTP_USER@$FTP_SERVER 
 
 ls -la
 
