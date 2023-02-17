@@ -40,7 +40,7 @@ INDEX_WEB_CONTENT = BashOperator(
     bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-ingest-marc-records.sh ",
     env={
         "FTP_SERVER": SFTP.host,
-        "FTP_PORT": SFTP.port,
+        "FTP_PORT": str(SFTP.port),
         "FTP_USER": SFTP.login,
         "FTP_ID_PATH": "/opt/airflow/dspacesftp@ftp_prod-private-key",
         "CM_API_ENDPOINT": HTTP.host,
