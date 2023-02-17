@@ -1,17 +1,9 @@
-# Airflow DAG to index Web Content into SolrCloud.
-from datetime import datetime, timedelta
+""" Airflow DAG to index Web Content into SolrCloud. """
+from datetime import timedelta
 import airflow
 import pendulum
-from airflow.models import Variable
 from airflow.hooks.base import BaseHook
 from airflow.operators.bash import BashOperator
-
-"""
-INIT SYSTEMWIDE VARIABLES
-
-check for existence of systemwide variables shared across tasks that can be
-initialized here if not found (i.e. if this is a new installation) & defaults exist
-"""
 
 SFTP = BaseHook.get_connection("MARC_FILES_SFTP")
 HTTP = BaseHook.get_connection("CENTRALIZED_METADATA_API")
