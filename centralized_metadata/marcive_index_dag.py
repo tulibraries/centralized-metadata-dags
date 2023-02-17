@@ -37,7 +37,7 @@ Tasks with custom logic are relegated to individual Python files.
 
 INDEX_WEB_CONTENT = BashOperator(
     task_id="get_and_ingest_marcive_records",
-    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-ingest-marc-records.sh",
+    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-ingest-marc-records.sh ",
     env={
         "FTP_SERVER": SFTP.host,
         "FTP_PORT": SFTP.port,
