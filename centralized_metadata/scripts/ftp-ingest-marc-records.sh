@@ -12,7 +12,7 @@ echo get marcive/* | sftp -P $FTP_PORT -i $FTP_ID_PATH -o StrictHostKeyChecking=
 
 ls -la
 
-for file in $(ls); do
+for file in $(find ~+ -type f); do
   echo importing $file
   curl -F "marc_file=@$file" $CM_API_ENDPOINT 
 done
