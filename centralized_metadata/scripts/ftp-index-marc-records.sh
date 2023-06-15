@@ -12,7 +12,13 @@ echo get marcive/* | sftp -P $FTP_PORT -i $FTP_ID_PATH -o StrictHostKeyChecking=
 
 ls -la
 
-for file in $(find ~+ -type f); do
+if [[ $CM_API_ENDPOINT =~ delete ]]; then
+  find_operator=""
+else
+  find_operator='!'
+fi
+
+for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]\{1,\}$'); do
   echo importing $file
   curl -F "marc_file=@$file" $CM_API_ENDPOINT 
 done

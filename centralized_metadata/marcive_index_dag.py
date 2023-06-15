@@ -37,13 +37,26 @@ Tasks with custom logic are relegated to individual Python files.
 
 INDEX_WEB_CONTENT = BashOperator(
     task_id="get_and_ingest_marcive_records",
-    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-ingest-marc-records.sh ",
+    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-index-marc-records.sh ",
     env={
         "FTP_SERVER": SFTP.host,
         "FTP_PORT": str(SFTP.port),
         "FTP_USER": SFTP.login,
         "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
         "CM_API_ENDPOINT": HTTP.host,
+    },
+    dag=DAG
+)
+
+DELETE_RECORDS = BashOperator(
+    task_id="get_and_delete_marcive_records",
+    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-index-marc-records.sh ",
+    env={
+        "FTP_SERVER": SFTP.host,
+        "FTP_PORT": str(SFTP.port),
+        "FTP_USER": SFTP.login,
+        "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
+        "CM_API_ENDPOINT": HTTP.host + "/marc_file/delete",
     },
     dag=DAG
 )
