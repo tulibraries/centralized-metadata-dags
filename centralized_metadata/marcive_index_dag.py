@@ -60,3 +60,6 @@ DELETE_RECORDS = BashOperator(
     },
     dag=DAG
 )
+
+
+DELETE_RECORDS.set_upstream(INDEX_WEB_CONTENT)
