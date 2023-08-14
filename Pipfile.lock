@@ -193,11 +193,11 @@
         },
         "apache-airflow-providers-common-sql": {
             "hashes": [
-                "sha256:dacae224249c31effd9ad8c602134032faf7a1ceb7ee134510f4d5e1968c45b9",
-                "sha256:fba55e7a08c480d28cb6c8780891fe82784d5352d70329bf25e0b2b1b32da5a0"
+                "sha256:6b3c27f99be524091d91e22e5d5075cb7b5b8cd7a763906271f38c72da947db2",
+                "sha256:dfead1b6e874d176c476779d3089431dd066d3a1c2348fb5aebddd8afe0da458"
             ],
             "markers": "python_version ~= '3.8'",
-            "version": "==1.6.2"
+            "version": "==1.7.0"
         },
         "apache-airflow-providers-ftp": {
             "hashes": [
@@ -268,11 +268,11 @@
         },
         "async-timeout": {
             "hashes": [
-                "sha256:2163e1640ddb52b7a8c80d0a67a08587e5d245cc9c553a74a847056bc2976b15",
-                "sha256:8ca1e4fcf50d07413d66d1a5e416e42cfdf5851c981d679a09851a6853383b3c"
+                "sha256:4640d96be84d82d02ed59ea2b7105a0f7b33abe8703703cd0ab0bf87c427522f",
+                "sha256:7405140ff1230c310e51dc27b3145b9092d659ce68ff733fb0cefe3ee42be028"
             ],
-            "markers": "python_version >= '3.6'",
-            "version": "==4.0.2"
+            "markers": "python_version >= '3.7'",
+            "version": "==4.0.3"
         },
         "attrs": {
             "hashes": [
@@ -300,19 +300,19 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:807d4a4698ba9a76d5901a1663ff1943d13efbc388908f38b60f209c3511f1d6",
-                "sha256:839deb868d1278dd5a3f87208cfc4a8e259c95ca3cbe607cc322d435f02f63b0"
+                "sha256:20feedb753e87d6dd55665e2e9dda08b031518291350c9c57b552c86a537fd4e",
+                "sha256:f08f6c83608721c2142abd2ccc5f15bd5c98c282ad9e0d39f9efc59d98604658"
             ],
             "index": "pypi",
-            "version": "==1.28.23"
+            "version": "==1.28.25"
         },
         "botocore": {
             "hashes": [
-                "sha256:d0a95f74eb6bd99e8f52f16af0a430ba6cd1526744f40ffdd3fcccceeaf961c2",
-                "sha256:f3258feaebce48f138eb2675168c4d33cc3d99e9f45af13cb8de47bdc2b9c573"
+                "sha256:17cc6db84644251a5b519aeccd5eb1c313a18ef2e92616ec16182aa30c877152",
+                "sha256:b8a40b0ca1e3c8290a4c0d473c8e1575d2e8b2ddc3c61dd8814c3976357cac84"
             ],
             "markers": "python_version >= '3.7'",
-            "version": "==1.31.23"
+            "version": "==1.31.25"
         },
         "cachelib": {
             "hashes": [
