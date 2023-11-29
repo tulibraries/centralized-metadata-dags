@@ -20,9 +20,9 @@ fi
 
 for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[0-9]+$'); do
   echo $operation $file
-  output_file=output.json
-  headers_file=headers.txt
+  output_file=/tmp/output.json
+  headers_file=/tmp/headers.txt
   curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file
   cat $output_file
-  cat $headers_file | grep -i X-CM
+  grep -i 'X-CM' $headers_file
 done
