@@ -19,7 +19,7 @@ else
 fi
 
 output_file=output.json
-errors_file=errors.txt
+header_file=header_file.txt
 fail=no
 
 for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[0-9]+$'); do
