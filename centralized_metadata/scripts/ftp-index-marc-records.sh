@@ -18,11 +18,16 @@ else
   operation="importing"
 fi
 
+output_file=output.json
+errors_file=errors.txt
+fail=no
+
 for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[0-9]+$'); do
-  echo $operation $file
-  output_file=/tmp/output.json
-  headers_file=/tmp/headers.txt
-  curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file
+  curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file --no-fail
   cat $output_file
   grep -i 'X-CM' $headers_file
+
+  if [ grep -q "500" $header_file ]; then  fail=yes; fi
 done
+
+if [ $fail == 'yes' ]; then exit 1; fi
