@@ -27,7 +27,7 @@ for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[
   cat $output_file
   grep -i 'X-CM' $headers_file
 
-  if [ grep -q "500" $headers_file ]; then  fail=yes; fi
+  if grep -q "HTTP.*500" $headers_file; then fail=yes; fi
 done
 
 if [ $fail == 'yes' ]; then exit 1; fi
