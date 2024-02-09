@@ -2512,11 +2512,12 @@
         },
         "starlette": {
             "hashes": [
-                "sha256:009fb98ecd551a55017d204f033c58b13abcd4719cb5c41503abbf6d260fde11",
-                "sha256:a4dc2a3448fb059000868d7eb774dd71229261b6d49b6851e7849bec69c0a011"
+                "sha256:4134757b950f027c8f16028ec81787751bb44145df17c8b0fa84087b9851b42d",
+                "sha256:e53e086e620ba715f0c187daca92927b722484d148e70921f0de075936119536"
             ],
+            "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==0.31.1"
+            "version": "==0.36.2"
         },
         "tabulate": {
             "hashes": [
