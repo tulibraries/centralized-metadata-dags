@@ -4,21 +4,19 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pytest = "*"
 apache-airflow = "==2.8.3"
 pylint = "*"
-moto = "*"
-requests-mock = "*"
-boto3 = "*"
-
+pytest = "==7.4.4"
+moto = "==5.0.2"
+requests-mock = "==1.11.0"
+boto3 = "==1.33.13"
 
 
 # required in circleci context.
-numpy = "*"
-pandas = "*"
+numpy = "==1.24.4"
+pandas = "==2.2.1"
 
 [packages]
-pytest = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.11"

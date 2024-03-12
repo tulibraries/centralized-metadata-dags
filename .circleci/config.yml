@@ -4,7 +4,7 @@ jobs:
   lint_and_test:
     working_directory: ~/centralized-metadata-dags
     docker:
-      - image: cimg/python:3.9.10
+      - image: cimg/python:3.11.4
         auth:
           username: $DOCKERHUB_USER
           password: $DOCKERHUB_PASSWORD
