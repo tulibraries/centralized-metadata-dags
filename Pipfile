@@ -4,7 +4,7 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-apache-airflow = "==2.8.3"
+apache-airflow = "==2.9.0"
 pylint = "*"
 pytest = "==7.4.4"
 moto = "==5.0.3"
