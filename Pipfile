@@ -14,7 +14,7 @@ boto3 = "==1.33.13"
 
 # required in circleci context.
 numpy = "==1.26.4"
-pandas = "==2.2.1"
+pandas = "==2.1.4"
 
 [packages]
 
