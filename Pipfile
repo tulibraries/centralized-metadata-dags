@@ -7,7 +7,7 @@ verify_ssl = true
 apache-airflow = "==2.9.1"
 pylint = "*"
 pytest = "==8.2.0"
-moto = "==5.0.6"
+moto = "==5.0.9"
 requests-mock = "==1.11.0"
 boto3 = "==1.33.13"
 
