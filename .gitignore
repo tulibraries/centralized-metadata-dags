@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+constraints-*.txt
+
 .pytest_cache/
 .conan_the_deployer
 .gritty_travis
@@ -14,3 +16,4 @@ deploy.zip
 dags
 data
 .vscode
+requirements.txt

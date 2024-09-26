@@ -13,10 +13,23 @@ jobs:
     steps:
       - checkout
       - run:
-          name: 'Run Pylint & Pytest'
+          name: 'Instasll Dependencies'
           command: |
             SLUGIFY_USES_TEXT_UNIDECODE=yes pipenv install --dev
+
+      - run:
+          name: 'Check Airflow Constraints'
+          command: |
+            make compare-dependencies
+
+      - run:
+          name: 'Run Pylint'
+          command: |
             make lint
+
+      - run:
+          name: 'Run Pytest'
+          command: |
             make test
 
 workflows:
