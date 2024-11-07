@@ -43,7 +43,7 @@ INDEX_WEB_CONTENT = BashOperator(
         "FTP_PORT": str(SFTP.port),
         "FTP_USER": SFTP.login,
         "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
-        "CM_API_ENDPOINT": HTTP.host,
+        "CM_API_ENDPOINT": HTTP.host + "/records",
     },
     dag=DAG
 )
