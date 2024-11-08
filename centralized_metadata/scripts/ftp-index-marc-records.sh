@@ -31,7 +31,7 @@ done
 for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[0-9]+$'); do
   touch $output_file
   touch $headers_file
-  touch $error_fil
+  touch $error_log
 
   curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file --no-fail 2> $error_log
 
