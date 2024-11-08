@@ -20,11 +20,24 @@ fi
 
 output_file=output.json
 headers_file=headers_file.txt
+error_log=error.log
 fail=no
 
+echo "These are the files that are going to get uploaded"
 for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[0-9]+$'); do
-  curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file --no-fail
-  cat $output_file
+  echo $file
+done
+
+for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[0-9]+$'); do
+  touch $output_file
+  touch $headers_file
+  touch $error_fil
+
+  curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file --no-fail 2> $error_log
+
+
+  cat $output_log
+  cat $error_log
   grep -i 'X-CM' $headers_file
 
   if grep -q "HTTP.*500" $headers_file; then fail=yes; fi
