@@ -1,9 +1,8 @@
 lint:
-	pipenv run pylint centralized_metadata -E
 	.circleci/pylint
 
 test:
-	pipenv run pytest
+	PYTHONPATH=. pipenv run pytest
 
 compare-dependencies:
 	.circleci/scripts/compare_dependencies.sh

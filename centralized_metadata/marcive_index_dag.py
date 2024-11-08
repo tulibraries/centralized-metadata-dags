@@ -43,7 +43,7 @@ INDEX_WEB_CONTENT = BashOperator(
         "FTP_PORT": str(SFTP.port),
         "FTP_USER": SFTP.login,
         "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
-        "CM_API_ENDPOINT": HTTP.host,
+        "CM_API_ENDPOINT": HTTP.get_uri() + "/records",
     },
     dag=DAG
 )
@@ -56,7 +56,7 @@ DELETE_RECORDS = BashOperator(
         "FTP_PORT": str(SFTP.port),
         "FTP_USER": SFTP.login,
         "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
-        "CM_API_ENDPOINT": HTTP.host + "/marc_file/delete",
+        "CM_API_ENDPOINT": HTTP.get_uri() + "/marc_file/delete",
     },
     dag=DAG
 )
