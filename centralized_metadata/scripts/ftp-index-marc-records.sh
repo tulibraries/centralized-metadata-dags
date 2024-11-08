@@ -35,8 +35,7 @@ for file in $(find ~+ -type f $find_operator -regex '.*D\.[0-9]+$' -regex '.*\.[
 
   curl -s -F "marc_file=@$file" $CM_API_ENDPOINT -D $headers_file --output $output_file --no-fail 2> $error_log
 
-
-  cat $output_log
+  cat $output_file
   cat $error_log
   grep -i 'X-CM' $headers_file
 
