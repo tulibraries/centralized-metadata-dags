@@ -1,5 +1,5 @@
 lint:
-	pipenv run pylint centralized_metadata -E .circleci/pylint
+	.circleci/pylint
 
 test:
 	PYTHONPATH=. pipenv run pytest
