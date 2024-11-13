@@ -2,9 +2,9 @@
 import os
 import unittest
 import airflow
-from centralized_metadata.hello_world_dag import DAG
+from centralized_metadata.marcive_index_dag import DAG
 
-class TestHelloWorldDag(unittest.TestCase):
+class TestMarciveIndexDag(unittest.TestCase):
     """Primary Class for Testing"""
 
     def setUp(self):
@@ -13,14 +13,11 @@ class TestHelloWorldDag(unittest.TestCase):
 
     def test_dag_loads(self):
         """Unit test that the DAG identifier is set correctly."""
-        self.assertEqual(DAG.dag_id, "hello_world")
-
-    def test_dag_interval_is_variable(self):
-        """Unit test that the DAG schedule is set by configuration."""
-        self.assertEqual(DAG.schedule_interval, "@weekly")
+        self.assertEqual(DAG.dag_id, "marcive_ingest")
 
     def test_dag_tasks_present(self):
         """Unit test that the DAG instance contains the expected tasks."""
         self.assertEqual(self.tasks, [
-            "set_collection_name",
+            "get_and_ingest_marcive_records",
+            "get_and_delete_marcive_records",
             ])
