@@ -24,7 +24,7 @@ qa_deploy:
     - |
       helm pull oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --untar
     - |
-      helm upgrade airflow oci://$HARBOR/tulibraries/centralized-metadata-airflow --history-max 5 \
+      helm upgrade airflow oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --history-max 5 \
       --set image.repository=harbor.k8s.temple.edu/tulibraries/apache-airflow:$VERSION \
       --set 'ingress.hosts[0].host=centralized-metadata-airflow.k8s.temple.edu' \
       --set 'ingress.hosts[0].paths[0].path=/' \
