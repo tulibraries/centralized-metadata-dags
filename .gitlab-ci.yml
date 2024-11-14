@@ -1,10 +1,7 @@
 include:
   - project: "infrastructure-engineering-shared/gitlab-ci-templates"
     file:
-      - "lint_docker.yaml"
-      - "build_and_scan_docker.yaml"
       - "kubectl_commands.yaml"
-      - "sast_scanning.yaml"
 
 variables:
   IMAGE: "tulibraries/airflow"
