@@ -1,0 +1,33 @@
+include:
+  - project: "infrastructure-engineering-shared/gitlab-ci-templates"
+    file:
+      - "kubectl_commands.yaml"
+
+variables:
+  RANCHER: rancher-np
+  CLUSTER: $DEV_CLUSTER
+  IMAGE: "tulibraries/airflow"
+  HARBOR: "harbor.k8s.temple.edu"
+  HELM_EXPERIMENTAL_OCI: "1"
+
+stages:
+  - deploy
+
+qa_deploy:
+  stage: deploy
+  extends: .helm_setup
+  only:
+    - main
+  script:
+    - |
+      export VERSION=$(curl -X 'GET' "https://harbor.k8s.temple.edu/api/v2.0/projects/tulibraries/repositories/apache-airflow/artifacts?q=tag%3Dlatest&page=1&page_size=10&with_tag=true&with_label=false&with_scan_overview=false&with_signature=false&with_immutable_status=false&with_accessory=false" -H 'accept: application/json' -H 'X-Accept-Vulnerabilities: application/vnd.security.vulnerability.report; version=1.1, application/vnd.scanner.adapter.vuln.report.harbor+json; version=1.0' | jq .[0].tags | jq -r '[.[] | select(.name != "latest")][0].name')
+    - |
+      helm upgrade airflow oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --history-max 5 \
+        --namespace=centralized-metadata-airflow \
+        --set image.repository=harbor.k8s.temple.edu/tulibraries/apache-airflow:$VERSION \
+        --set 'ingress.hosts[0].host=centralized-metadata-airflow.k8s.temple.edu' \
+        --set 'ingress.hosts[0].paths[0].path=/' \
+        --set 'ingress.hosts[0].paths[0].pathType=ImplementationSpecific' \
+        --set 'ingress.tls[0].secretName=centralized-metadata-airflow.k8s.temple.edu' \
+        --set 'ingress.tls[0].hosts[0]=centralized-metadata-airflow.k8s.temple.edu' \
+        --set namespace=centralized-metadata-airflow
