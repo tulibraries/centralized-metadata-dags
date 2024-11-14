@@ -21,7 +21,8 @@ qa_deploy:
   script:
     - |
       export VERSION=$(curl -X 'GET' "https://harbor.k8s.temple.edu/api/v2.0/projects/tulibraries/repositories/apache-airflow/artifacts?q=tag%3Dlatest&page=1&page_size=10&with_tag=true&with_label=false&with_scan_overview=false&with_signature=false&with_immutable_status=false&with_accessory=false" -H 'accept: application/json' -H 'X-Accept-Vulnerabilities: application/vnd.security.vulnerability.report; version=1.1, application/vnd.scanner.adapter.vuln.report.harbor+json; version=1.0' | jq .[0].tags | jq -r '[.[] | select(.name != "latest")][0].name')
-    - echo "Apache Airflow Image VERSION: $VERSION"
+    - |
+      echo "Apache Airflow Image VERSION: $VERSION"
     - |
       helm pull oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --untar
     - |
