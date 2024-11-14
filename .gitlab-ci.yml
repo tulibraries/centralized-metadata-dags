@@ -4,6 +4,8 @@ include:
       - "kubectl_commands.yaml"
 
 variables:
+  RANCHER: rancher-np
+  CLUSTER: $DEV_CLUSTER
   IMAGE: "tulibraries/airflow"
   HARBOR: "harbor.k8s.temple.edu"
   HELM_EXPERIMENTAL_OCI: "1"
@@ -12,10 +14,6 @@ stages:
   - deploy
 
 qa_deploy:
-  variables:
-    RANCHER: rancher-np
-    CLUSTER: $DEV_CLUSTER
-    IMAGE: "tulibraries/airflow"
   stage: deploy
   extends: .helm_setup
   #only:
