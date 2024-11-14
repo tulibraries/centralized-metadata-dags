@@ -26,4 +26,13 @@ qa_deploy:
     - |
       helm pull oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --untar
     - |
-      helm upgrade airflow oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --history-max 5 --set image.repository=harbor.k8s.temple.edu/tulibraries/apache-airflow:$VERSION --set 'ingress.hosts[0].host=centralized-metadata-airflow.k8s.temple.edu' --set 'ingress.hosts[0].paths[0].path=/' --set 'ingress.hosts[0].paths[0].pathType=ImplementationSpecific' --set 'ingress.tls[0].secretName=centralized-metadata-airflow.k8s.temple.edu' --set 'ingress.tls[0].hosts[0]=centralized-metadata-airflow.k8s.temple.edu' --set namespace=centralized-metadata-airflow
+      kubectl config get-contexts
+    - |
+      helm upgrade airflow oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --history-max 5 \
+        --set image.repository=harbor.k8s.temple.edu/tulibraries/apache-airflow:$VERSION \
+        --set 'ingress.hosts[0].host=centralized-metadata-airflow.k8s.temple.edu' \
+        --set 'ingress.hosts[0].paths[0].path=/' \
+        --set 'ingress.hosts[0].paths[0].pathType=ImplementationSpecific' \
+        --set 'ingress.tls[0].secretName=centralized-metadata-airflow.k8s.temple.edu' \
+        --set 'ingress.tls[0].hosts[0]=centralized-metadata-airflow.k8s.temple.edu' \
+        --set namespace=centralized-metadata-airflow
