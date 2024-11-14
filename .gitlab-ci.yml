@@ -26,7 +26,7 @@ qa_deploy:
     - |
       helm pull oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --untar
     - |
-      kubectl config get-contexts
+      helm list
     - |
       helm upgrade airflow oci://$HARBOR/tulibraries/charts/centralized-metadata-airflow --history-max 5 \
         --set image.repository=harbor.k8s.temple.edu/tulibraries/apache-airflow:$VERSION \
