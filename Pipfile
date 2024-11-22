@@ -9,7 +9,7 @@ pylint = "*"
 pytest = "==7.4.4"
 moto = "==5.0.11"
 requests-mock = "==1.12.1"
-boto3 = "==1.34.131"
+boto3 = "==1.35.67"
 # required in circleci context.
 numpy = "==1.26.4"
 pandas = "==2.1.4"
