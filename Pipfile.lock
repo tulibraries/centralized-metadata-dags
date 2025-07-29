@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f1e60727552ade8e0fea2cc4b28210b519238af43f424d06681cb5b4e819726f"
+            "sha256": "2c7c9f46534aa9d9e3dd9023e73690a3994bdfeb95377d3198e0ef5be83e3157"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -1307,12 +1307,12 @@
         },
         "moto": {
             "hashes": [
-                "sha256:606b641f4c6ef69f28a84147d6d6806d052011e7ae7b0fe46ae8858e7a27a0a3",
-                "sha256:bdba9bec0afcde9f99b58c5271d6458dbfcda0a0a1e9beaecd808d2591db65ea"
+                "sha256:0c4f0387b06b5d24c0ce90f8f89f31a565cc05789189c5d59b5df02594f2e371",
+                "sha256:e9ba7e4764a6088ccc34e3cc846ae719861ca202409fa865573de40a3e805b9b"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==5.0.11"
+            "markers": "python_version >= '3.9'",
+            "version": "==5.1.9"
         },
         "multidict": {
             "hashes": [
