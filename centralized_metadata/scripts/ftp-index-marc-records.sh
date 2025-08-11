@@ -10,25 +10,18 @@ cd ./marc_records
 
 echo get marcive/* | sftp -P $FTP_PORT -i $FTP_ID_PATH -o StrictHostKeyChecking=no $FTP_USER@$FTP_SERVER 
 
-if [[ $CM_API_ENDPOINT =~ delete ]]; then
-  find_operator=""
-  operation="deleting"
-else
-  find_operator='!'
-  operation="importing"
-fi
 
 output_file=output.json
 headers_file=headers_file.txt
 error_log=error.log
 fail=no
 
-echo "These are the files that are going to get uploaded"
-for file in $(find ~+ -type f $find_operator -regex '.*D\.\(mrc\|[0-9]+\)$' -regex '.*\.\(mrc\|[0-9]+\)$'); do
+echo "These are the files that are going to processed"
+for file in $(find ~+ -type f -iregex '.*\(mrc\)$'); do
   echo $file
 done
 
-for file in $(find ~+ -type f $find_operator -regex '.*D\.\(mrc\|[0-9]+\)$' -regex '.*\.\(mrc\|[0-9]+\)$'); do
+for file in $(find ~+ -type f -iregex '.*\(mrc\)$'); do
   touch $output_file
   touch $headers_file
   touch $error_log
