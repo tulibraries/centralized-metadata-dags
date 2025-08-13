@@ -24,11 +24,11 @@ error_log=error.log
 fail=no
 
 echo "These are the files that are going to get uploaded"
-for file in $(find ~+ -type f $find_operator -regex '.*D\.\(mrc\|[0-9]+\)$' -regex '.*\.\(mrc\|[0-9]+\)$'); do
+for file in $(find ~+ -type f $find_operator -regex '.*DEL\.mrc$' -regex '.*\.mrc$'); do
   echo $file
 done
 
-for file in $(find ~+ -type f $find_operator -regex '.*D\.\(mrc\|[0-9]+\)$' -regex '.*\.\(mrc\|[0-9]+\)$'); do
+for file in $(find ~+ -type f $find_operator -regex '.*DEL\.mrc$' -regex '.*\.mrc$'); do
   touch $output_file
   touch $headers_file
   touch $error_log
