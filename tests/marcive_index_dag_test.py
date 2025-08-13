@@ -19,4 +19,5 @@ class TestMarciveIndexDag(unittest.TestCase):
         """Unit test that the DAG instance contains the expected tasks."""
         self.assertEqual(self.tasks, [
             "get_and_ingest_marcive_records",
+            "get_and_delete_marcive_records",
             ])
