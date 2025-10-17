@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "f1e60727552ade8e0fea2cc4b28210b519238af43f424d06681cb5b4e819726f"
+            "sha256": "73e9444b7dc5f5eb7a2290c7e2f1b9c7a321f4e84708825072bc92b4acbdb12e"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -283,20 +283,20 @@
         },
         "boto3": {
             "hashes": [
-                "sha256:53a5307f6a3526ee2f8590e3c45efa504a3ea4532c1bfe4926c0c19bf188d141",
-                "sha256:f9843a5d06f501d66ada06f5a5417f671823af2cf319e36ceefa1bafaaaaa953"
+                "sha256:5f7dbf8539d26e0ee973baea49d0db8c1ee57707a785c5a23307241fdba04327",
+                "sha256:81d32d4f09ecddc2c48aa3d0acfd5dbd2d2e3e2718c353a56cb3af59b2e22148"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==1.36.3"
+            "markers": "python_version >= '3.9'",
+            "version": "==1.40.54"
         },
         "botocore": {
             "hashes": [
-                "sha256:4a63bcef7ecf6146fd3a61dc4f9b33b7473b49bdaf1770e9aaca6eee0c9eab62",
-                "sha256:4e3f19913887a58502e71ef8d696fe7eaa54de7813ff73390cd5883f837dfa6e"
+                "sha256:808232d9fcbf2c295b6e7cd1897119ee2fb97e756edfb313aa6d27ba0b281c66",
+                "sha256:95a98d30c037250bc1b40ba6c5ac0c9776cf00ff526eea92ec0a334d89e4a537"
             ],
-            "markers": "python_version >= '3.8'",
-            "version": "==1.36.26"
+            "markers": "python_version >= '3.9'",
+            "version": "==1.40.54"
         },
         "cachelib": {
             "hashes": [
@@ -2175,11 +2175,11 @@
         },
         "s3transfer": {
             "hashes": [
-                "sha256:ca855bdeb885174b5ffa95b9913622459d4ad8e331fc98eb01e6d5eb6a30655d",
-                "sha256:edae4977e3a122445660c7c114bba949f9d191bae3b34a096f18a1c8c354527a"
+                "sha256:ea3b790c7077558ed1f02a3072fb3cb992bbbd253392f4b6e9e8976941c7d456",
+                "sha256:eff12264e7c8b4985074ccce27a3b38a485bb7f7422cc8046fee9be4983e4125"
             ],
-            "markers": "python_version >= '3.8'",
-            "version": "==0.11.3"
+            "markers": "python_version >= '3.9'",
+            "version": "==0.14.0"
         },
         "setproctitle": {
             "hashes": [
