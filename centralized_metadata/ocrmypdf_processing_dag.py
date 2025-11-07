@@ -7,7 +7,7 @@ from pathlib import Path
 import airflow
 import pendulum
 from airflow.models import Variable
-from airflow.operators.python_operator import PythonOperator
+from airflow.operators.python import PythonOperator
 
 DEFAULT_SHARE_ROOT = "/opt/airflow/shared"
 DEFAULT_RELATIVE_PATH = "DataPreservationStaging/OCRMyPDFs"
@@ -47,7 +47,9 @@ def _resolve_pdf_directory(context):
         RELATIVE_PATH_VARIABLE, default_var=DEFAULT_RELATIVE_PATH
     )
     relative_path = Path(relative_path_value)
-    configured_directory = relative_path if relative_path.is_absolute() else share_root / relative_path
+    configured_directory = (
+        relative_path if relative_path.is_absolute() else share_root / relative_path
+    )
     return configured_directory.resolve()
 
 
@@ -95,6 +97,3 @@ RUN_OCR = PythonOperator(
     params={"pdf_directory": DEFAULT_PDF_DIRECTORY},
     dag=DAG,
 )
-
-
-RUN_OCR
