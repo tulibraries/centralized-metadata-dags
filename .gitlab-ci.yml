@@ -4,7 +4,7 @@ include:
       - "kubectl_commands.yaml"
 
 variables:
-  RANCHER: rancher-np
+  RANCHER: np-rancher
   CLUSTER: $DEV_CLUSTER
   IMAGE: "tulibraries/airflow"
   HARBOR: "harbor.k8s.temple.edu"
