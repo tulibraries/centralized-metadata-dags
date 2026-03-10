@@ -68,7 +68,7 @@ def process_pdfs(**context):
         return "no-pdfs-found"
 
     for pdf_file in pdf_files:
-        output_pdf = pdf_file.with_name(f"{pdf_file.stem}_ocr.pdf")
+        output_pdf = pdf_file.with_name(f"{pdf_file.stem}_opti.pdf")
         command = [
             "ocrmypdf",
             "--optimize",
