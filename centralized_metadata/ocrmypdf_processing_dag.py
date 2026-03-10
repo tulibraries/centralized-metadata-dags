@@ -1,5 +1,6 @@
 """Airflow DAG to run OCRmyPDF across a target directory."""
 import logging
+import shutil
 import subprocess
 from datetime import timedelta
 from pathlib import Path
@@ -65,8 +66,9 @@ def process_pdfs(**context):
 
     if not pdf_files:
         logging.info("No PDF files found in %s", pdf_directory)
-        return "no-pdfs-found"
+        return []
 
+    processed_files = []
     for pdf_file in pdf_files:
         output_pdf = pdf_file.with_name(f"{pdf_file.stem}_opti.pdf")
         command = [
@@ -78,8 +80,45 @@ def process_pdfs(**context):
         ]
         logging.info("Running command: %s", " ".join(command))
         subprocess.run(command, check=True)  # Raises CalledProcessError on failure.
+        processed_files.append(
+            {"original": str(pdf_file), "optimized": str(output_pdf)}
+        )
 
-    return f"processed-{len(pdf_files)}-pdfs"
+    return processed_files
+
+
+def move_processed_pdfs(**context):
+    """Move optimized and original PDFs into their destination directories."""
+    ti = context["ti"]
+    processed_files = ti.xcom_pull(task_ids="run_ocrmypdf") or []
+    if not processed_files:
+        logging.info("No processed files to move")
+        return "no-files-to-move"
+
+    moved_count = 0
+    for file_info in processed_files:
+        original_pdf = Path(file_info["original"])
+        optimized_pdf = Path(file_info["optimized"])
+        pdf_directory = original_pdf.parent
+        optimized_directory = pdf_directory / "Optimized"
+        originals_directory = pdf_directory / "Originals"
+        optimized_directory.mkdir(parents=True, exist_ok=True)
+        originals_directory.mkdir(parents=True, exist_ok=True)
+
+        optimized_destination = optimized_directory / optimized_pdf.name
+        originals_destination = originals_directory / original_pdf.name
+        logging.info(
+            "Moving %s to %s and %s to %s",
+            optimized_pdf,
+            optimized_destination,
+            original_pdf,
+            originals_destination,
+        )
+        shutil.move(str(optimized_pdf), str(optimized_destination))
+        shutil.move(str(original_pdf), str(originals_destination))
+        moved_count += 1
+
+    return f"moved-{moved_count}-pdfs"
 
 
 DAG = airflow.DAG(
@@ -97,3 +136,12 @@ RUN_OCR = PythonOperator(
     params={"pdf_directory": DEFAULT_PDF_DIRECTORY},
     dag=DAG,
 )
+
+MOVE_PROCESSED_FILES = PythonOperator(
+    task_id="move_processed_pdfs",
+    python_callable=move_processed_pdfs,
+    provide_context=True,
+    dag=DAG,
+)
+
+RUN_OCR >> MOVE_PROCESSED_FILES
