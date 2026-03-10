@@ -15,6 +15,8 @@ DEFAULT_RELATIVE_PATH = "DataPreservationStaging/OCRMyPDFs"
 DEFAULT_PDF_DIRECTORY = str(Path(DEFAULT_SHARE_ROOT) / DEFAULT_RELATIVE_PATH)
 SHARE_ROOT_VARIABLE = "OCR_PDF_SHARE_ROOT"
 RELATIVE_PATH_VARIABLE = "OCR_PDF_RELATIVE_PATH"
+DEFAULT_SCHEDULE_INTERVAL = "@weekly"
+SCHEDULE_INTERVAL_VARIABLE = "OPTIMIZE_PDF_SCHEDULE_INTERVAL"
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -126,7 +128,9 @@ DAG = airflow.DAG(
     default_args=DEFAULT_ARGS,
     catchup=False,
     max_active_runs=1,
-    schedule_interval=None,
+    schedule_interval=Variable.get(
+        SCHEDULE_INTERVAL_VARIABLE, default_var=DEFAULT_SCHEDULE_INTERVAL
+    ),
 )
 
 RUN_OCR = PythonOperator(
