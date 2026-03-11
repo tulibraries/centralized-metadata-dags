@@ -191,6 +191,9 @@ def process_pdfs(**context):
     processed_files = []
     for pdf_file in pdf_files:
         output_pdf = pdf_file.with_name(f"{pdf_file.stem}_opti.pdf")
+        if output_pdf.exists():
+            logging.info("Removing existing optimized PDF: %s", output_pdf)
+            output_pdf.unlink()
         command = [
             "ocrmypdf",
             "--optimize",
