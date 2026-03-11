@@ -1,14 +1,19 @@
 """Airflow DAG to run OCRmyPDF across a target directory."""
+import json
 import logging
 import shutil
 import subprocess
 from datetime import timedelta
 from pathlib import Path
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 import airflow
 import pendulum
 from airflow.models import Variable
+from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
+from airflow.providers.slack.notifications.slack import send_slack_notification
 
 DEFAULT_SHARE_ROOT = "/opt/airflow/shared"
 DEFAULT_RELATIVE_PATH = "DataPreservationStaging/OCRMyPDFs"
@@ -17,6 +22,118 @@ SHARE_ROOT_VARIABLE = "OCR_PDF_SHARE_ROOT"
 RELATIVE_PATH_VARIABLE = "OCR_PDF_RELATIVE_PATH"
 DEFAULT_SCHEDULE_INTERVAL = "@weekly"
 SCHEDULE_INTERVAL_VARIABLE = "OPTIMIZE_PDF_SCHEDULE_INTERVAL"
+TEAMS_WEBHOOK_VARIABLE = "OPTIMIZE_PDF_TEAMS_WEBHOOK_URL"
+
+slackpostonfail = send_slack_notification(
+    channel="infra_alerts",
+    username="airflow",
+    text=(
+        ":poop: Task failed: {{ dag.dag_id }} {{ ti.task_id }} "
+        "{{ dag_run.logical_date }} {{ ti.log_url }}"
+    ),
+)
+slackpostonsuccess = send_slack_notification(
+    channel="infra_alerts",
+    username="airflow",
+    text=(
+        ":tada: Task succeeded: {{ dag.dag_id }} {{ ti.task_id }} "
+        "{{ dag_run.logical_date }} {{ ti.log_url }}"
+    ),
+)
+
+
+def _post_to_teams(title, text, theme_color):
+    """Send a message card to Teams using the configured webhook."""
+    webhook_url = Variable.get(TEAMS_WEBHOOK_VARIABLE, default_var=None)
+    if not webhook_url:
+        logging.warning(
+            "Skipping Teams notification because %s is not set", TEAMS_WEBHOOK_VARIABLE
+        )
+        return
+
+    payload = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "summary": title,
+        "themeColor": theme_color,
+        "title": title,
+        "text": text,
+    }
+    request_obj = Request(
+        webhook_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+    )
+    try:
+        with urlopen(request_obj, timeout=10):
+            return
+    except URLError as exc:
+        logging.error("Failed to send Teams notification: %s", exc)
+
+
+def _format_context_lines(context):
+    ti = context.get("ti") or context.get("task_instance")
+    dag = context.get("dag")
+    dag_run = context.get("dag_run")
+    dag_id = (dag.dag_id if dag else None) or (
+        dag_run.dag_id if dag_run else "unknown"
+    )
+    task_id = ti.task_id if ti else "unknown"
+    run_id = dag_run.run_id if dag_run else ""
+    logical_date = getattr(dag_run, "logical_date", None)
+    log_url = getattr(ti, "log_url", "")
+    lines = [
+        f"**DAG**: {dag_id}",
+        f"**Task**: {task_id}",
+    ]
+    if run_id:
+        lines.append(f"**Run ID**: {run_id}")
+    if logical_date:
+        lines.append(f"**Logical Date**: {logical_date}")
+    if log_url:
+        lines.append(f"[View log]({log_url})")
+    return dag_id, "\n".join(lines)
+
+
+def teamspostonfail(context):
+    """Send a Teams notification when a task fails."""
+    dag_id, context_text = _format_context_lines(context)
+    _post_to_teams(
+        f"DAG {dag_id} task failure",
+        context_text,
+        theme_color="C4463D",
+    )
+
+
+def teamspostonsuccess(context):
+    """Send a Teams notification when the workflow succeeds."""
+    dag_id, context_text = _format_context_lines(context)
+    _post_to_teams(
+        f"DAG {dag_id} completed successfully",
+        context_text,
+        theme_color="2EB886",
+    )
+
+
+def _run_failure_callbacks(context):
+    for callback in (slackpostonfail, teamspostonfail):
+        try:
+            callback(context)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.exception(
+                "Failure callback %r raised an exception: %s", callback, exc
+            )
+
+
+def _run_success_callbacks(context):
+    for callback in (slackpostonsuccess, teamspostonsuccess):
+        try:
+            callback(context)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            logging.exception(
+                "Success callback %r raised an exception: %s", callback, exc
+            )
+
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -24,6 +141,7 @@ DEFAULT_ARGS = {
     "start_date": pendulum.datetime(2024, 1, 1, tz="UTC"),
     "email_on_failure": False,
     "email_on_retry": False,
+    "on_failure_callback": _run_failure_callbacks,
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
@@ -148,4 +266,12 @@ MOVE_PROCESSED_FILES = PythonOperator(
     dag=DAG,
 )
 
+SUCCESS = EmptyOperator(
+    task_id='success',
+    on_success_callback=_run_success_callbacks,
+    trigger_rule="none_failed_min_one_success",
+    dag=DAG,
+)
+
 RUN_OCR.set_downstream(MOVE_PROCESSED_FILES)
+MOVE_PROCESSED_FILES.set_downstream(SUCCESS)
