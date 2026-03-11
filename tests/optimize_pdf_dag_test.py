@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from centralized_metadata.ocrmypdf_processing_dag import DAG, process_pdfs
+from centralized_metadata.optimize_pdf_dag import DAG, process_pdfs
 
 
 class TestOCRMyPDFDag(unittest.TestCase):
@@ -15,9 +15,9 @@ class TestOCRMyPDFDag(unittest.TestCase):
         """Ensure the DAG is registered with the expected ID and task."""
         self.assertEqual(DAG.dag_id, "ocrmypdf_batch")
         task_ids = [task.task_id for task in DAG.tasks]
-        self.assertEqual(task_ids, ["run_ocrmypdf", "move_processed_pdfs"])
+        self.assertEqual(task_ids, ["run_ocrmypdf", "move_processed_pdfs", "success"])
 
-    @mock.patch("centralized_metadata.ocrmypdf_processing_dag.subprocess.run")
+    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
     def test_process_pdfs_runs_command_per_file(self, mock_run):
         """Touch PDFs and verify we issue an OCR command for each."""
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -55,7 +55,7 @@ class TestOCRMyPDFDag(unittest.TestCase):
                 self.assertEqual(Path(command[4]).name, f"{expected_file.stem}_opti.pdf")
                 self.assertTrue(call_args.kwargs.get("check"))
 
-    @mock.patch("centralized_metadata.ocrmypdf_processing_dag.subprocess.run")
+    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
     def test_process_pdfs_handles_empty_directory(self, mock_run):
         """Confirm we short-circuit gracefully when no PDFs exist."""
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -64,7 +64,7 @@ class TestOCRMyPDFDag(unittest.TestCase):
             self.assertEqual(result, [])
             mock_run.assert_not_called()
 
-    @mock.patch("centralized_metadata.ocrmypdf_processing_dag.subprocess.run")
+    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
     def test_process_pdfs_prefers_dag_run_conf(self, mock_run):
         """dag_run.conf should override params and defaults."""
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -91,8 +91,8 @@ class TestOCRMyPDFDag(unittest.TestCase):
             )
             mock_run.assert_called_once()
 
-    @mock.patch("centralized_metadata.ocrmypdf_processing_dag.Variable.get")
-    @mock.patch("centralized_metadata.ocrmypdf_processing_dag.subprocess.run")
+    @mock.patch("centralized_metadata.optimize_pdf_dag.Variable.get")
+    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
     def test_process_pdfs_uses_share_root_and_relative_path(self, mock_run, mock_variable_get):
         """Variable-based root + relative path should resolve to final directory."""
         with tempfile.TemporaryDirectory() as tmp_dir:
