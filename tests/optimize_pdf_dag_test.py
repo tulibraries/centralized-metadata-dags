@@ -17,8 +17,8 @@ class TestOCRMyPDFDag(unittest.TestCase):
         task_ids = [task.task_id for task in DAG.tasks]
         self.assertEqual(task_ids, ["run_ocrmypdf", "move_processed_pdfs", "success"])
 
-    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
-    def test_process_pdfs_runs_command_per_file(self, mock_run):
+    @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
+    def test_process_pdfs_runs_command_per_file(self, mock_run_and_stream):
         """Touch PDFs and verify we issue an OCR command for each."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             pdf_one = os.path.realpath(os.path.join(tmp_dir, "file_one.pdf"))
@@ -45,27 +45,33 @@ class TestOCRMyPDFDag(unittest.TestCase):
                     },
                 ],
             )
-            self.assertEqual(mock_run.call_count, 2)
+            self.assertEqual(mock_run_and_stream.call_count, 2)
 
             expected_files = [Path(pdf_one), Path(pdf_two)]
-            for call_args, expected_file in zip(mock_run.call_args_list, expected_files):
+            for call_args, expected_file in zip(
+                mock_run_and_stream.call_args_list, expected_files
+            ):
                 command = call_args.args[0]
-                self.assertEqual(command[:3], ["ocrmypdf", "--optimize", "1"])
-                self.assertEqual(Path(command[3]).name, expected_file.name)
-                self.assertEqual(Path(command[4]).name, f"{expected_file.stem}_opti.pdf")
-                self.assertTrue(call_args.kwargs.get("check"))
+                self.assertEqual(
+                    command[:4], ["ocrmypdf", "--skip-text", "--optimize", "1"]
+                )
+                self.assertEqual(Path(command[4]).name, expected_file.name)
+                self.assertEqual(
+                    Path(command[5]).name, f"{expected_file.stem}_opti.pdf"
+                )
+                self.assertEqual(call_args.kwargs.get("prefix"), expected_file.name)
 
-    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
-    def test_process_pdfs_handles_empty_directory(self, mock_run):
+    @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
+    def test_process_pdfs_handles_empty_directory(self, mock_run_and_stream):
         """Confirm we short-circuit gracefully when no PDFs exist."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             result = process_pdfs(params={"pdf_directory": tmp_dir})
 
             self.assertEqual(result, [])
-            mock_run.assert_not_called()
+            mock_run_and_stream.assert_not_called()
 
-    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
-    def test_process_pdfs_prefers_dag_run_conf(self, mock_run):
+    @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
+    def test_process_pdfs_prefers_dag_run_conf(self, mock_run_and_stream):
         """dag_run.conf should override params and defaults."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             pdf_path = os.path.realpath(os.path.join(tmp_dir, "file.pdf"))
@@ -89,11 +95,13 @@ class TestOCRMyPDFDag(unittest.TestCase):
                     }
                 ],
             )
-            mock_run.assert_called_once()
+            mock_run_and_stream.assert_called_once()
 
     @mock.patch("centralized_metadata.optimize_pdf_dag.Variable.get")
-    @mock.patch("centralized_metadata.optimize_pdf_dag.subprocess.run")
-    def test_process_pdfs_uses_share_root_and_relative_path(self, mock_run, mock_variable_get):
+    @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
+    def test_process_pdfs_uses_share_root_and_relative_path(
+        self, mock_run_and_stream, mock_variable_get
+    ):
         """Variable-based root + relative path should resolve to final directory."""
         with tempfile.TemporaryDirectory() as tmp_dir:
             share_root = os.path.realpath(tmp_dir)
@@ -123,8 +131,8 @@ class TestOCRMyPDFDag(unittest.TestCase):
                     }
                 ],
             )
-            command = mock_run.call_args.args[0]
-            self.assertEqual(Path(command[3]).resolve(), pdf_path.resolve())
+            command = mock_run_and_stream.call_args.args[0]
+            self.assertEqual(Path(command[4]).resolve(), pdf_path.resolve())
 
 if __name__ == "__main__":
     unittest.main()

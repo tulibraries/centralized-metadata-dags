@@ -32,14 +32,6 @@ slackpostonfail = send_slack_notification(
         "{{ dag_run.logical_date }} {{ ti.log_url }}"
     ),
 )
-slackpostonsuccess = send_slack_notification(
-    channel="infra_alerts",
-    username="airflow",
-    text=(
-        ":tada: Task succeeded: {{ dag.dag_id }} {{ ti.task_id }} "
-        "{{ dag_run.logical_date }} {{ ti.log_url }}"
-    ),
-)
 
 
 def _post_to_teams(title, text, theme_color):
@@ -115,25 +107,6 @@ def teamspostonsuccess(context):
     )
 
 
-def _run_failure_callbacks(context):
-    for callback in (slackpostonfail, teamspostonfail):
-        try:
-            callback(context)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.exception(
-                "Failure callback %r raised an exception: %s", callback, exc
-            )
-
-
-def _run_success_callbacks(context):
-    for callback in (slackpostonsuccess, teamspostonsuccess):
-        try:
-            callback(context)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
-            logging.exception(
-                "Success callback %r raised an exception: %s", callback, exc
-            )
-
 
 DEFAULT_ARGS = {
     "owner": "airflow",
@@ -141,7 +114,7 @@ DEFAULT_ARGS = {
     "start_date": pendulum.datetime(2024, 1, 1, tz="UTC"),
     "email_on_failure": False,
     "email_on_retry": False,
-    "on_failure_callback": _run_failure_callbacks,
+    "on_failure_callback": [slackpostonfail,teamspostonfail],
     "retries": 1,
     "retry_delay": timedelta(minutes=5),
 }
@@ -174,6 +147,34 @@ def _resolve_pdf_directory(context):
     return configured_directory.resolve()
 
 
+def run_and_stream(command, prefix=None):
+    """
+    Run a subprocess command, stream output to logs in real time,
+    and raise CalledProcessError if the command fails.
+    """
+    with subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1,
+    ) as process:
+        if process.stdout is None:
+            raise RuntimeError("stdout pipe was not created")
+
+        for line in process.stdout:
+            line = line.rstrip()
+            if prefix:
+                logging.info("[%s] %s", prefix, line)
+            else:
+                logging.info("%s", line)
+
+        return_code = process.wait()
+
+    if return_code != 0:
+        raise subprocess.CalledProcessError(return_code, command)
+
+
 def process_pdfs(**context):
     """Iterate through the directory and run OCRmyPDF with optimize level 1."""
     pdf_directory = _resolve_pdf_directory(context)
@@ -189,20 +190,27 @@ def process_pdfs(**context):
         return []
 
     processed_files = []
+
     for pdf_file in pdf_files:
         output_pdf = pdf_file.with_name(f"{pdf_file.stem}_opti.pdf")
+
         if output_pdf.exists():
             logging.info("Removing existing optimized PDF: %s", output_pdf)
             output_pdf.unlink()
+
         command = [
             "ocrmypdf",
+            "--skip-text",
             "--optimize",
             "1",
             str(pdf_file),
             str(output_pdf),
         ]
+
         logging.info("Running command: %s", " ".join(command))
-        subprocess.run(command, check=True)  # Raises CalledProcessError on failure.
+
+        run_and_stream(command, prefix=pdf_file.name)
+
         processed_files.append(
             {"original": str(pdf_file), "optimized": str(output_pdf)}
         )
@@ -271,7 +279,7 @@ MOVE_PROCESSED_FILES = PythonOperator(
 
 SUCCESS = EmptyOperator(
     task_id='success',
-    on_success_callback=_run_success_callbacks,
+    on_success_callback=[teamspostonsuccess],
     trigger_rule="none_failed_min_one_success",
     dag=DAG,
 )
