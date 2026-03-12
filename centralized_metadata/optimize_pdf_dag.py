@@ -175,6 +175,31 @@ def run_and_stream(command, prefix=None):
         raise subprocess.CalledProcessError(return_code, command)
 
 
+def _move_processed_pair(original_pdf: Path, optimized_pdf: Path):
+    """
+    Move the optimized and source PDFs into their destination folders.
+    Returns paths to the moved files.
+    """
+    pdf_directory = original_pdf.parent
+    optimized_directory = pdf_directory / "Optimized"
+    originals_directory = pdf_directory / "Originals"
+    optimized_directory.mkdir(parents=True, exist_ok=True)
+    originals_directory.mkdir(parents=True, exist_ok=True)
+
+    optimized_destination = optimized_directory / optimized_pdf.name
+    originals_destination = originals_directory / original_pdf.name
+    logging.info(
+        "Moving %s to %s and %s to %s",
+        optimized_pdf,
+        optimized_destination,
+        original_pdf,
+        originals_destination,
+    )
+    shutil.move(str(optimized_pdf), str(optimized_destination))
+    shutil.move(str(original_pdf), str(originals_destination))
+    return originals_destination, optimized_destination
+
+
 def process_pdfs(**context):
     """Iterate through the directory and run OCRmyPDF with optimize level 1."""
     pdf_directory = _resolve_pdf_directory(context)
@@ -210,46 +235,18 @@ def process_pdfs(**context):
         logging.info("Running command: %s", " ".join(command))
 
         run_and_stream(command, prefix=pdf_file.name)
+        originals_destination, optimized_destination = _move_processed_pair(
+            pdf_file, output_pdf
+        )
 
         processed_files.append(
-            {"original": str(pdf_file), "optimized": str(output_pdf)}
+            {
+                "original": str(originals_destination),
+                "optimized": str(optimized_destination),
+            }
         )
 
     return processed_files
-
-
-def move_processed_pdfs(**context):
-    """Move optimized and original PDFs into their destination directories."""
-    ti = context["ti"]
-    processed_files = ti.xcom_pull(task_ids="run_ocrmypdf") or []
-    if not processed_files:
-        logging.info("No processed files to move")
-        return "no-files-to-move"
-
-    moved_count = 0
-    for file_info in processed_files:
-        original_pdf = Path(file_info["original"])
-        optimized_pdf = Path(file_info["optimized"])
-        pdf_directory = original_pdf.parent
-        optimized_directory = pdf_directory / "Optimized"
-        originals_directory = pdf_directory / "Originals"
-        optimized_directory.mkdir(parents=True, exist_ok=True)
-        originals_directory.mkdir(parents=True, exist_ok=True)
-
-        optimized_destination = optimized_directory / optimized_pdf.name
-        originals_destination = originals_directory / original_pdf.name
-        logging.info(
-            "Moving %s to %s and %s to %s",
-            optimized_pdf,
-            optimized_destination,
-            original_pdf,
-            originals_destination,
-        )
-        shutil.move(str(optimized_pdf), str(optimized_destination))
-        shutil.move(str(original_pdf), str(originals_destination))
-        moved_count += 1
-
-    return f"moved-{moved_count}-pdfs"
 
 
 DAG = airflow.DAG(
@@ -270,13 +267,6 @@ RUN_OCR = PythonOperator(
     dag=DAG,
 )
 
-MOVE_PROCESSED_FILES = PythonOperator(
-    task_id="move_processed_pdfs",
-    python_callable=move_processed_pdfs,
-    provide_context=True,
-    dag=DAG,
-)
-
 SUCCESS = EmptyOperator(
     task_id='success',
     on_success_callback=[teamspostonsuccess],
@@ -284,5 +274,4 @@ SUCCESS = EmptyOperator(
     dag=DAG,
 )
 
-RUN_OCR.set_downstream(MOVE_PROCESSED_FILES)
-MOVE_PROCESSED_FILES.set_downstream(SUCCESS)
+RUN_OCR.set_downstream(SUCCESS)

@@ -15,7 +15,7 @@ class TestOCRMyPDFDag(unittest.TestCase):
         """Ensure the DAG is registered with the expected ID and task."""
         self.assertEqual(DAG.dag_id, "ocrmypdf_batch")
         task_ids = [task.task_id for task in DAG.tasks]
-        self.assertEqual(task_ids, ["run_ocrmypdf", "move_processed_pdfs", "success"])
+        self.assertEqual(task_ids, ["run_ocrmypdf", "success"])
 
     @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
     def test_process_pdfs_runs_command_per_file(self, mock_run_and_stream):
@@ -26,21 +26,30 @@ class TestOCRMyPDFDag(unittest.TestCase):
             open(pdf_one, "wb").close()
             open(pdf_two, "wb").close()
 
+            def fake_run(command, prefix=None):
+                Path(command[5]).write_bytes(b"optimized")
+
+            mock_run_and_stream.side_effect = fake_run
+
             result = process_pdfs(params={"pdf_directory": tmp_dir})
 
             self.assertEqual(
                 result,
                 [
                     {
-                        "original": pdf_one,
+                        "original": os.path.realpath(
+                            os.path.join(tmp_dir, "Originals", "file_one.pdf")
+                        ),
                         "optimized": os.path.realpath(
-                            os.path.join(tmp_dir, "file_one_opti.pdf")
+                            os.path.join(tmp_dir, "Optimized", "file_one_opti.pdf")
                         ),
                     },
                     {
-                        "original": pdf_two,
+                        "original": os.path.realpath(
+                            os.path.join(tmp_dir, "Originals", "file_two.pdf")
+                        ),
                         "optimized": os.path.realpath(
-                            os.path.join(tmp_dir, "file_two_opti.pdf")
+                            os.path.join(tmp_dir, "Optimized", "file_two_opti.pdf")
                         ),
                     },
                 ],
@@ -61,6 +70,13 @@ class TestOCRMyPDFDag(unittest.TestCase):
                 )
                 self.assertEqual(call_args.kwargs.get("prefix"), expected_file.name)
 
+            originals_dir = Path(tmp_dir) / "Originals"
+            optimized_dir = Path(tmp_dir) / "Optimized"
+            self.assertTrue((originals_dir / "file_one.pdf").exists())
+            self.assertTrue((originals_dir / "file_two.pdf").exists())
+            self.assertTrue((optimized_dir / "file_one_opti.pdf").exists())
+            self.assertTrue((optimized_dir / "file_two_opti.pdf").exists())
+
     @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
     def test_process_pdfs_handles_empty_directory(self, mock_run_and_stream):
         """Confirm we short-circuit gracefully when no PDFs exist."""
@@ -77,6 +93,11 @@ class TestOCRMyPDFDag(unittest.TestCase):
             pdf_path = os.path.realpath(os.path.join(tmp_dir, "file.pdf"))
             open(pdf_path, "wb").close()
 
+            def fake_run(command, prefix=None):
+                Path(command[5]).write_text("optimized")
+
+            mock_run_and_stream.side_effect = fake_run
+
             dag_run_mock = mock.Mock()
             dag_run_mock.conf = {"pdf_directory": tmp_dir}
 
@@ -88,9 +109,11 @@ class TestOCRMyPDFDag(unittest.TestCase):
                 result,
                 [
                     {
-                        "original": pdf_path,
+                        "original": os.path.realpath(
+                            os.path.join(tmp_dir, "Originals", "file.pdf")
+                        ),
                         "optimized": os.path.realpath(
-                            os.path.join(tmp_dir, "file_opti.pdf")
+                            os.path.join(tmp_dir, "Optimized", "file_opti.pdf")
                         ),
                     }
                 ],
@@ -111,6 +134,11 @@ class TestOCRMyPDFDag(unittest.TestCase):
             pdf_path = target_dir / "variable.pdf"
             pdf_path.touch()
 
+            def fake_run(command, prefix=None):
+                Path(command[5]).write_bytes(b"optimized")
+
+            mock_run_and_stream.side_effect = fake_run
+
             def fake_variable_get(key, default_var=None):
                 if key == "OCR_PDF_SHARE_ROOT":
                     return share_root
@@ -126,8 +154,8 @@ class TestOCRMyPDFDag(unittest.TestCase):
                 result,
                 [
                     {
-                        "original": str(pdf_path.resolve()),
-                        "optimized": str((target_dir / "variable_opti.pdf").resolve()),
+                        "original": str((target_dir / "Originals" / "variable.pdf").resolve()),
+                        "optimized": str((target_dir / "Optimized" / "variable_opti.pdf").resolve()),
                     }
                 ],
             )
