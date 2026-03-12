@@ -13,9 +13,9 @@ class TestOCRMyPDFDag(unittest.TestCase):
 
     def test_dag_loads(self):
         """Ensure the DAG is registered with the expected ID and task."""
-        self.assertEqual(DAG.dag_id, "ocrmypdf_batch")
+        self.assertEqual(DAG.dag_id, "optimize_pdf_batch")
         task_ids = [task.task_id for task in DAG.tasks]
-        self.assertEqual(task_ids, ["run_ocrmypdf", "success"])
+        self.assertEqual(task_ids, ["optimize_pdfs", "success"])
 
     @mock.patch("centralized_metadata.optimize_pdf_dag.run_and_stream")
     def test_process_pdfs_runs_command_per_file(self, mock_run_and_stream):
