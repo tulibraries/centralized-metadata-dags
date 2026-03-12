@@ -116,7 +116,7 @@ DEFAULT_ARGS = {
     "email_on_retry": False,
     "on_failure_callback": [slackpostonfail,teamspostonfail],
     "retries": 1,
-    "retry_delay": timedelta(minutes=5),
+    "retry_delay": timedelta(minutes=1),
 }
 
 
@@ -250,7 +250,7 @@ def process_pdfs(**context):
 
 
 DAG = airflow.DAG(
-    "ocrmypdf_batch",
+    "optimize_pdf_batch",
     default_args=DEFAULT_ARGS,
     catchup=False,
     max_active_runs=1,
@@ -260,7 +260,7 @@ DAG = airflow.DAG(
 )
 
 RUN_OCR = PythonOperator(
-    task_id="run_ocrmypdf",
+    task_id="optimize_pdfs",
     python_callable=process_pdfs,
     provide_context=True,
     params={"pdf_directory": DEFAULT_PDF_DIRECTORY},
