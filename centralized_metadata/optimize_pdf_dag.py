@@ -215,6 +215,8 @@ def process_pdfs(**context):
         return []
 
     processed_files = []
+    errors = []
+    errors_directory = pdf_directory / "Errors"
 
     for pdf_file in pdf_files:
         output_pdf = pdf_file.with_name(f"{pdf_file.stem}_opti.pdf")
@@ -234,16 +236,42 @@ def process_pdfs(**context):
 
         logging.info("Running command: %s", " ".join(command))
 
-        run_and_stream(command, prefix=pdf_file.name)
-        originals_destination, optimized_destination = _move_processed_pair(
-            pdf_file, output_pdf
-        )
+        try:
+            run_and_stream(command, prefix=pdf_file.name)
+            originals_destination, optimized_destination = _move_processed_pair(
+                pdf_file, output_pdf
+            )
 
-        processed_files.append(
-            {
-                "original": str(originals_destination),
-                "optimized": str(optimized_destination),
-            }
+            processed_files.append(
+                {
+                    "original": str(originals_destination),
+                    "optimized": str(optimized_destination),
+                }
+            )
+        except subprocess.CalledProcessError as exc:
+            logging.error(
+                "Failed to optimize %s (exit code %s)", pdf_file, exc.returncode
+            )
+            errors_directory.mkdir(parents=True, exist_ok=True)
+
+            error_original_destination = errors_directory / pdf_file.name
+            if error_original_destination.exists():
+                error_original_destination.unlink()
+            shutil.move(str(pdf_file), str(error_original_destination))
+
+            if output_pdf.exists():
+                error_output_destination = errors_directory / output_pdf.name
+                if error_output_destination.exists():
+                    error_output_destination.unlink()
+                shutil.move(str(output_pdf), str(error_output_destination))
+
+            errors.append(str(error_original_destination))
+            continue
+
+    if errors:
+        raise RuntimeError(
+            f"Failed to optimize {len(errors)} PDF(s). "
+            f"Moved originals to {errors_directory}"
         )
 
     return processed_files
