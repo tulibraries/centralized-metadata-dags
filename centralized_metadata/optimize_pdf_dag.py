@@ -1,8 +1,10 @@
 """Airflow DAG to run OCRmyPDF across a target directory."""
+import errno
 import json
 import logging
 import shutil
 import subprocess
+import time
 from datetime import timedelta
 from pathlib import Path
 from urllib.error import URLError
@@ -175,6 +177,27 @@ def run_and_stream(command, prefix=None):
         raise subprocess.CalledProcessError(return_code, command)
 
 
+def _move_with_retry(source: Path, destination: Path, retries: int = 5, delay: float = 1):
+    """Move a file, retrying transient SMB locking errors before failing."""
+    for attempt in range(1, retries + 1):
+        try:
+            shutil.move(str(source), str(destination))
+            return
+        except OSError as exc:
+            if exc.errno != errno.EBUSY or attempt == retries:
+                raise
+            sleep_time = delay * attempt
+            logging.warning(
+                "Move of %s -> %s failed with EBUSY (attempt %s/%s). Retrying in %.1fs",
+                source,
+                destination,
+                attempt,
+                retries,
+                sleep_time,
+            )
+            time.sleep(sleep_time)
+
+
 def _move_processed_pair(original_pdf: Path, optimized_pdf: Path):
     """
     Move the optimized and source PDFs into their destination folders.
@@ -195,8 +218,8 @@ def _move_processed_pair(original_pdf: Path, optimized_pdf: Path):
         original_pdf,
         originals_destination,
     )
-    shutil.move(str(optimized_pdf), str(optimized_destination))
-    shutil.move(str(original_pdf), str(originals_destination))
+    _move_with_retry(optimized_pdf, optimized_destination)
+    _move_with_retry(original_pdf, originals_destination)
     return originals_destination, optimized_destination
 
 
