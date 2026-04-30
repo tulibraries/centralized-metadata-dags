@@ -1,46 +1,46 @@
-# PyTest Configuration file.
+"""Pytest configuration for Airflow DAG tests."""
 import os
+import shutil
 import subprocess
-from airflow.models import Variable, Connection
-from airflow.settings import Session
+import sys
+import tempfile
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+AIRFLOW_HOME = Path(tempfile.mkdtemp(prefix="centralized-metadata-airflow-"))
+AIRFLOW_BIN = Path(sys.executable).with_name("airflow")
+DAGS_FOLDER = AIRFLOW_HOME / "dags"
+LOGS_FOLDER = AIRFLOW_HOME / "logs"
+DATA_FOLDER = AIRFLOW_HOME / "data"
+AIRFLOW_DB = AIRFLOW_HOME / "airflow.db"
+
+os.environ["AIRFLOW_HOME"] = str(AIRFLOW_HOME)
+os.environ["AIRFLOW__CORE__DAGS_FOLDER"] = str(DAGS_FOLDER)
+os.environ["AIRFLOW__CORE__LOAD_EXAMPLES"] = "False"
+os.environ["AIRFLOW__DATABASE__SQL_ALCHEMY_CONN"] = f"sqlite:///{AIRFLOW_DB}"
+os.environ["AIRFLOW__LOGGING__BASE_LOG_FOLDER"] = str(LOGS_FOLDER)
+os.environ["AIRFLOW_CONN_CENTRALIZED_METADATA_API"] = "http://127.0.0.1"
+os.environ["AIRFLOW_CONN_MARC_FILES_SFTP"] = "sftp://airflow@127.0.0.1:22"
+os.environ["AIRFLOW_VAR_HELLO_MESSAGE"] = "hola"
+os.environ["AIRFLOW_VAR_OPTIMIZE_PDF_SCHEDULE"] = "@weekly"
+
 
 def pytest_sessionstart(session):
-    """
-    Allows plugins and conftest files to perform initial configuration.
-    This hook is called for every plugin and initial conftest
-    file after command line options have been parsed.
-    """
-    repo_dir = os.getcwd()
-    subprocess.run("airflow db init", shell=True)
-    subprocess.run("mkdir -p dags/centralized_metadata", shell=True)
-    subprocess.run("mkdir -p data", shell=True)
-    subprocess.run("mkdir -p logs", shell=True)
-    subprocess.run("cp ./centralized_metadata/*.py dags/centralized_metadata", shell=True)
+    """Create an isolated Airflow home and migrate the metadata DB."""
+    del session
+    dag_target = DAGS_FOLDER / "centralized_metadata"
+    dag_target.mkdir(parents=True, exist_ok=True)
+    LOGS_FOLDER.mkdir(parents=True, exist_ok=True)
+    DATA_FOLDER.mkdir(parents=True, exist_ok=True)
 
-    Variable.set("hello_message", "hola")
-    CENTRALIZED_METADATA_API = Connection(
-        conn_id="CENTRALIZED_METADATA_API",
-        conn_type="http",
-        host="http://127.0.0.1",
-    )
-    MARC_FILES_SFTP = Connection(
-        conn_id="MARC_FILES_SFTP",
-        conn_type="sftp",
-        host="sftp://127.0.0.1",
-    )
+    for dag_file in (REPO_ROOT / "centralized_metadata").glob("*.py"):
+        shutil.copy2(dag_file, dag_target / dag_file.name)
 
-    airflow_session = Session()
-    airflow_session.add(CENTRALIZED_METADATA_API)
-    airflow_session.add(MARC_FILES_SFTP)
-    airflow_session.commit()
+    airflow_command = str(AIRFLOW_BIN) if AIRFLOW_BIN.exists() else "airflow"
+    subprocess.run([airflow_command, "db", "migrate"], check=True)
 
 
-def pytest_sessionfinish():
-    """
-    Called after whole test run finished, right before
-    returning the exit status to the system.
-    """
-    subprocess.run("rm -rf dags", shell=True)
-    subprocess.run("rm -rf data", shell=True)
-    subprocess.run("rm -rf logs", shell=True)
-    subprocess.run("yes | airflow db reset", shell=True)
+def pytest_sessionfinish(session, exitstatus):
+    """Remove the isolated Airflow home after tests finish."""
+    del session, exitstatus
+    shutil.rmtree(AIRFLOW_HOME, ignore_errors=True)

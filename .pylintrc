@@ -1,11 +1,13 @@
-[MASTER]
-# Allow per file linting (good for local development).
-; init-hook=
-# Localized disable duplicate-code check not working:
-# @see https://github.com/PyCQA/pylint/issues/214
-disable=duplicate-code
+[MESSAGES CONTROL]
+disable =
+  duplicate-code,
+  line-too-long,
+  consider-using-with,
+  wrong-import-order,
+  unexpected-keyword-arg
+
+
 
 [DESIGN]
 max-parents=8
-
 
