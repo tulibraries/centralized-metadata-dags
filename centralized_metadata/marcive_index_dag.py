@@ -1,4 +1,4 @@
-""" Airflow DAG to index Web Content into SolrCloud. """
+""" Airflow DAG to index Authority data"""
 from datetime import timedelta
 
 import pendulum
@@ -8,7 +8,6 @@ from airflow.providers.standard.operators.bash import BashOperator
 MARC_FILES_SFTP_CONNECTION_ID = "MARC_FILES_SFTP"
 CENTRALIZED_METADATA_API_CONNECTION_ID = "CENTRALIZED_METADATA_API"
 SCRIPT_PATH = "/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-index-marc-records.sh "
-FTP_ID_PATH = "/home/airflow/dspacesftp@ftp_prod-private-key"
 
 DEFAULT_ARGS = {
     'owner': 'airflow',
@@ -23,17 +22,19 @@ DEFAULT_ARGS = {
 
 def _marcive_env(endpoint_path):
     """Build runtime-templated environment variables for the ingest script."""
+    sftp_conn = f"conn.get('{MARC_FILES_SFTP_CONNECTION_ID}')"
+    cm_api_conn = f"conn.get('{CENTRALIZED_METADATA_API_CONNECTION_ID}')"
+
     return {
-        "FTP_SERVER": f"{{{{ conn.{MARC_FILES_SFTP_CONNECTION_ID}.host }}}}",
-        "FTP_PORT": f"{{{{ conn.{MARC_FILES_SFTP_CONNECTION_ID}.port or 22 }}}}",
-        "FTP_USER": f"{{{{ conn.{MARC_FILES_SFTP_CONNECTION_ID}.login }}}}",
-        "FTP_ID_PATH": FTP_ID_PATH,
+        "FTP_SERVER": f"{{{{ {sftp_conn}.host }}}}",
+        "FTP_PORT": f"{{{{ {sftp_conn}.port or 22 }}}}",
+        "FTP_USER": f"{{{{ {sftp_conn}.login }}}}",
+        "FTP_ID_PATH": f"{{{{ {sftp_conn}.extra_dejson.key_file }}}}",
         "CM_API_ENDPOINT": (
-            f"{{{{ conn.{CENTRALIZED_METADATA_API_CONNECTION_ID}.get_uri().rstrip('/') }}}}"
+            f"{{{{ {cm_api_conn}.get_uri().rstrip('/') }}}}"
             f"{endpoint_path}"
         ),
     }
-
 
 DAG = AirflowDAG(
     'marcive_ingest',
