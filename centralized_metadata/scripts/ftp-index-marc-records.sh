@@ -8,8 +8,15 @@ mkdir -p ./marc_records
 
 cd ./marc_records
 
-echo get marcive/* | sftp -P $FTP_PORT -i $FTP_ID_PATH -o StrictHostKeyChecking=no $FTP_USER@$FTP_SERVER 
-
+printf '%s\n' "get marcive/*" | sftp \
+  -b - \
+  -P "$FTP_PORT" \
+  -i "$FTP_ID_PATH" \
+  -o StrictHostKeyChecking=no \
+  -o BatchMode=yes \
+  -o IdentitiesOnly=yes \
+  "$FTP_USER@$FTP_SERVER"
+  
 if [[ $CM_API_ENDPOINT =~ delete ]]; then
   find_operator=""
   operation="deleting"
