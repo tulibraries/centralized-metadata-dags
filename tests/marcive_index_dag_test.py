@@ -26,10 +26,14 @@ class TestMarciveIndexDag(unittest.TestCase):
         """Connection values should be resolved by Airflow at task runtime."""
         task = DAG.get_task("get_and_ingest_marcive_records")
 
-        self.assertEqual(task.env["FTP_SERVER"], "{{ conn.MARC_FILES_SFTP.host }}")
-        self.assertEqual(task.env["FTP_PORT"], "{{ conn.MARC_FILES_SFTP.port or 22 }}")
-        self.assertEqual(task.env["FTP_USER"], "{{ conn.MARC_FILES_SFTP.login }}")
+        self.assertEqual(task.env["FTP_SERVER"], "{{ conn.get('MARC_FILES_SFTP').host }}")
+        self.assertEqual(task.env["FTP_PORT"], "{{ conn.get('MARC_FILES_SFTP').port or 22 }}")
+        self.assertEqual(task.env["FTP_USER"], "{{ conn.get('MARC_FILES_SFTP').login }}")
+        self.assertEqual(
+            task.env["FTP_ID_PATH"],
+            "{{ conn.get('MARC_FILES_SFTP').extra_dejson.key_file }}",
+        )
         self.assertEqual(
             task.env["CM_API_ENDPOINT"],
-            "{{ conn.CENTRALIZED_METADATA_API.get_uri().rstrip('/') }}/records",
+            "{{ conn.get('CENTRALIZED_METADATA_API').get_uri().rstrip('/') }}/records",
         )
