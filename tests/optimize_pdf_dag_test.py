@@ -2,6 +2,7 @@
 import os
 import tempfile
 import unittest
+
 from pathlib import Path
 from unittest import mock
 
@@ -21,12 +22,13 @@ class TestOCRMyPDFDag(unittest.TestCase):
     def test_process_pdfs_runs_command_per_file(self, mock_run_and_stream):
         """Touch PDFs and verify we issue an OCR command for each."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            pdf_one = os.path.realpath(os.path.join(tmp_dir, "file_one.pdf"))
-            pdf_two = os.path.realpath(os.path.join(tmp_dir, "file_two.pdf"))
-            open(pdf_one, "wb").close()
-            open(pdf_two, "wb").close()
+            pdf_one = Path(tmp_dir) / "file_one.pdf"
+            pdf_two = Path(tmp_dir) / "file_two.pdf"
+            pdf_one.touch()
+            pdf_two.touch()
 
             def fake_run(command, prefix=None):
+                self.assertIn(prefix, {"file_one.pdf", "file_two.pdf"})
                 Path(command[5]).write_bytes(b"optimized")
 
             mock_run_and_stream.side_effect = fake_run
@@ -56,7 +58,7 @@ class TestOCRMyPDFDag(unittest.TestCase):
             )
             self.assertEqual(mock_run_and_stream.call_count, 2)
 
-            expected_files = [Path(pdf_one), Path(pdf_two)]
+            expected_files = [pdf_one, pdf_two]
             for call_args, expected_file in zip(
                 mock_run_and_stream.call_args_list, expected_files
             ):
@@ -90,11 +92,12 @@ class TestOCRMyPDFDag(unittest.TestCase):
     def test_process_pdfs_prefers_dag_run_conf(self, mock_run_and_stream):
         """dag_run.conf should override params and defaults."""
         with tempfile.TemporaryDirectory() as tmp_dir:
-            pdf_path = os.path.realpath(os.path.join(tmp_dir, "file.pdf"))
-            open(pdf_path, "wb").close()
+            pdf_path = Path(tmp_dir) / "file.pdf"
+            pdf_path.touch()
 
             def fake_run(command, prefix=None):
-                Path(command[5]).write_text("optimized")
+                self.assertEqual(prefix, "file.pdf")
+                Path(command[5]).write_bytes(b"optimized")
 
             mock_run_and_stream.side_effect = fake_run
 
@@ -135,16 +138,17 @@ class TestOCRMyPDFDag(unittest.TestCase):
             pdf_path.touch()
 
             def fake_run(command, prefix=None):
+                self.assertEqual(prefix, "variable.pdf")
                 Path(command[5]).write_bytes(b"optimized")
 
             mock_run_and_stream.side_effect = fake_run
 
-            def fake_variable_get(key, default_var=None):
+            def fake_variable_get(key, default=None):
                 if key == "OCR_PDF_SHARE_ROOT":
                     return share_root
                 if key == "OCR_PDF_RELATIVE_PATH":
                     return relative_path
-                return default_var
+                return default
 
             mock_variable_get.side_effect = fake_variable_get
 

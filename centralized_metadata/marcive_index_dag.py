@@ -1,12 +1,14 @@
 """ Airflow DAG to index Web Content into SolrCloud. """
 from datetime import timedelta
-import airflow
-import pendulum
-from airflow.hooks.base import BaseHook
-from airflow.operators.bash import BashOperator
 
-SFTP = BaseHook.get_connection("MARC_FILES_SFTP")
-HTTP = BaseHook.get_connection("CENTRALIZED_METADATA_API")
+import pendulum
+from airflow.sdk import DAG as AirflowDAG
+from airflow.providers.standard.operators.bash import BashOperator
+
+MARC_FILES_SFTP_CONNECTION_ID = "MARC_FILES_SFTP"
+CENTRALIZED_METADATA_API_CONNECTION_ID = "CENTRALIZED_METADATA_API"
+SCRIPT_PATH = "/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-index-marc-records.sh "
+FTP_ID_PATH = "/home/airflow/dspacesftp@ftp_prod-private-key"
 
 DEFAULT_ARGS = {
     'owner': 'airflow',
@@ -14,17 +16,31 @@ DEFAULT_ARGS = {
     'start_date': pendulum.datetime(2018, 12, 13, tz="UTC"),
     'email_on_failure': False,
     'email_on_retry': False,
-    #'on_failure_callback': tasks.execute_slackpostonfail,
     'retries': 2,
     'retry_delay': timedelta(minutes=5),
 }
 
-DAG = airflow.DAG(
+
+def _marcive_env(endpoint_path):
+    """Build runtime-templated environment variables for the ingest script."""
+    return {
+        "FTP_SERVER": f"{{{{ conn.{MARC_FILES_SFTP_CONNECTION_ID}.host }}}}",
+        "FTP_PORT": f"{{{{ conn.{MARC_FILES_SFTP_CONNECTION_ID}.port or 22 }}}}",
+        "FTP_USER": f"{{{{ conn.{MARC_FILES_SFTP_CONNECTION_ID}.login }}}}",
+        "FTP_ID_PATH": FTP_ID_PATH,
+        "CM_API_ENDPOINT": (
+            f"{{{{ conn.{CENTRALIZED_METADATA_API_CONNECTION_ID}.get_uri().rstrip('/') }}}}"
+            f"{endpoint_path}"
+        ),
+    }
+
+
+DAG = AirflowDAG(
     'marcive_ingest',
     default_args=DEFAULT_ARGS,
     catchup=False,
     max_active_runs=1,
-    #schedule=SCHEDULE_INTERVAL
+    #schedule=SCHEDULE
 )
 
 """
@@ -37,27 +53,15 @@ Tasks with custom logic are relegated to individual Python files.
 
 INDEX_WEB_CONTENT = BashOperator(
     task_id="get_and_ingest_marcive_records",
-    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-index-marc-records.sh ",
-    env={
-        "FTP_SERVER": SFTP.host,
-        "FTP_PORT": str(SFTP.port),
-        "FTP_USER": SFTP.login,
-        "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
-        "CM_API_ENDPOINT": HTTP.get_uri() + "/records",
-    },
+    bash_command=SCRIPT_PATH,
+    env=_marcive_env("/records"),
     dag=DAG
 )
 
 DELETE_RECORDS = BashOperator(
     task_id="get_and_delete_marcive_records",
-    bash_command="/opt/airflow/dags/repo/centralized_metadata/scripts/ftp-index-marc-records.sh ",
-    env={
-        "FTP_SERVER": SFTP.host,
-        "FTP_PORT": str(SFTP.port),
-        "FTP_USER": SFTP.login,
-        "FTP_ID_PATH": "/home/airflow/dspacesftp@ftp_prod-private-key",
-        "CM_API_ENDPOINT": HTTP.get_uri() + "/marc_file/delete",
-    },
+    bash_command=SCRIPT_PATH,
+    env=_marcive_env("/marc_file/delete"),
     dag=DAG
 )
 

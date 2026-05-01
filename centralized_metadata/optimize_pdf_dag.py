@@ -5,16 +5,17 @@ import logging
 import shutil
 import subprocess
 import time
+import pendulum
+
 from datetime import timedelta
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-import airflow
-import pendulum
-from airflow.models import Variable
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
+
+from airflow.sdk import DAG as AirflowDAG, Variable
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.python import PythonOperator
 from airflow.providers.slack.notifications.slack import send_slack_notification
 
 DEFAULT_SHARE_ROOT = "/opt/airflow/shared"
@@ -22,8 +23,8 @@ DEFAULT_RELATIVE_PATH = "DataPreservationStaging/OCRMyPDFs"
 DEFAULT_PDF_DIRECTORY = str(Path(DEFAULT_SHARE_ROOT) / DEFAULT_RELATIVE_PATH)
 SHARE_ROOT_VARIABLE = "OCR_PDF_SHARE_ROOT"
 RELATIVE_PATH_VARIABLE = "OCR_PDF_RELATIVE_PATH"
-DEFAULT_SCHEDULE_INTERVAL = "@weekly"
-SCHEDULE_INTERVAL_VARIABLE = "OPTIMIZE_PDF_SCHEDULE_INTERVAL"
+DEFAULT_SCHEDULE = "@weekly"
+SCHEDULE_VARIABLE = "OPTIMIZE_PDF_SCHEDULE"
 TEAMS_WEBHOOK_VARIABLE = "OPTIMIZE_PDF_TEAMS_WEBHOOK_URL"
 
 slackpostonfail = send_slack_notification(
@@ -38,7 +39,7 @@ slackpostonfail = send_slack_notification(
 
 def _post_to_teams(title, text, theme_color):
     """Send a message card to Teams using the configured webhook."""
-    webhook_url = Variable.get(TEAMS_WEBHOOK_VARIABLE, default_var=None)
+    webhook_url = Variable.get(TEAMS_WEBHOOK_VARIABLE, default=None)
     if not webhook_url:
         logging.warning(
             "Skipping Teams notification because %s is not set", TEAMS_WEBHOOK_VARIABLE
@@ -137,10 +138,10 @@ def _resolve_pdf_directory(context):
         return Path(user_directory).expanduser().resolve()
 
     share_root = Path(
-        Variable.get(SHARE_ROOT_VARIABLE, default_var=DEFAULT_SHARE_ROOT)
+        Variable.get(SHARE_ROOT_VARIABLE, default=DEFAULT_SHARE_ROOT)
     ).expanduser()
     relative_path_value = Variable.get(
-        RELATIVE_PATH_VARIABLE, default_var=DEFAULT_RELATIVE_PATH
+        RELATIVE_PATH_VARIABLE, default=DEFAULT_RELATIVE_PATH
     )
     relative_path = Path(relative_path_value)
     configured_directory = (
@@ -300,20 +301,19 @@ def process_pdfs(**context):
     return processed_files
 
 
-DAG = airflow.DAG(
+DAG = AirflowDAG(
     "optimize_pdf_batch",
     default_args=DEFAULT_ARGS,
     catchup=False,
     max_active_runs=1,
-    schedule_interval=Variable.get(
-        SCHEDULE_INTERVAL_VARIABLE, default_var=DEFAULT_SCHEDULE_INTERVAL
+    schedule=Variable.get(
+        SCHEDULE_VARIABLE, default=DEFAULT_SCHEDULE
     ),
 )
 
 RUN_OCR = PythonOperator(
     task_id="optimize_pdfs",
     python_callable=process_pdfs,
-    provide_context=True,
     params={"pdf_directory": DEFAULT_PDF_DIRECTORY},
     dag=DAG,
 )
